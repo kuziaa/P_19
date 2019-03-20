@@ -1,0 +1,130 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import unittest
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as condition
+from selenium.webdriver.support.ui import WebDriverWait
+
+EXPLICIT_WAIT = 10
+SEARCH_TEXT = u"Александр Солодуха"
+
+
+class Input(object):
+    def __get__(self, instance, owner):
+        return instance._get_element(instance._input_selector, condition.presence_of_element_located)
+
+    def __set__(self, instance, value):
+        instance.input.send_keys(value)
+        instance.button.click()
+
+
+class SearchPage(object):
+    input = Input()
+
+    def __init__(self, driver, url, input_selector, button_selector, result_selector):
+        self._driver = driver
+        self._url = url
+        self._input_selector = input_selector
+        self._button_selector = button_selector
+        self._result_selector = result_selector
+
+    def open(self):
+        self._driver.get(self._url)
+
+    def _get_element(self, selector, expected_condition):
+        waiter = WebDriverWait(self._driver, EXPLICIT_WAIT)
+        return waiter.until(expected_condition((By.CSS_SELECTOR, selector)))
+
+    @property
+    def button(self):
+        return self._get_element(self._button_selector, condition.element_to_be_clickable)
+
+    def result(self):
+        return self._get_element(self._result_selector, condition.presence_of_element_located)
+
+
+class Google(SearchPage):
+    def __init__(self, driver):
+        url = "https://www.google.com"
+        input_selector = "input[name='q']"
+        button_selector = "input[type='button']"
+        result_selector = "#resultStats"
+        super(Google, self).__init__(driver, url, input_selector, button_selector, result_selector)
+
+
+class Yahoo(SearchPage):
+    def __init__(self, driver):
+        url = "https://www.yahoo.com"
+        input_selector = "input[name='p']"
+        button_selector = "#uh-search-button"
+        result_selector = "#results"
+        super(Yahoo, self).__init__(driver, url, input_selector, button_selector, result_selector)
+
+
+class TutBy(SearchPage):
+    def __init__(self, driver):
+        url = "https://www.tut.by"
+        input_selector = "#search_from_str"
+        button_selector = "input[name='search']"
+        result_selector = "div.outer"
+        super(TutBy, self).__init__(driver, url, input_selector, button_selector, result_selector)
+
+
+class Banana(SearchPage):
+    def __init__(self, driver):
+        url = "https://www.banana.by"
+        input_selector = "#searchinput"
+        button_selector = "#fullsearch input[type='submit']"
+        result_selector = "#content"
+        super(Banana, self).__init__(driver, url, input_selector, button_selector, result_selector)
+
+
+class Wikipedia(SearchPage):
+    def __init__(self, driver):
+        url = "https://www.wikipedia.org/"
+        input_selector = "#searchInput"
+        button_selector = "button[type='submit']"
+        result_selector = "#content"
+        super(Wikipedia, self).__init__(driver, url, input_selector, button_selector, result_selector)
+
+
+class SearchSoloduha(unittest.TestCase):
+
+    def setUp(self):
+        self.driver = webdriver.Chrome()
+
+    @staticmethod
+    def search_action(page):
+        page.open()
+        page.input = SEARCH_TEXT
+        time.sleep(5)
+        page.result()
+
+    def test_google_search(self):
+        page = Google(self.driver)
+        self.search_action(page)
+
+    def test_yahoo_search(self):
+        page = Yahoo(self.driver)
+        self.search_action(page)
+
+    def test_tut_by_search(self):
+        page = TutBy(self.driver)
+        self.search_action(page)
+
+    def test_banana_search(self):
+        page = Banana(self.driver)
+        self.search_action(page)
+
+    def test_wikipedia_search(self):
+        page = Wikipedia(self.driver)
+        self.search_action(page)
+
+    def tearDown(self):
+        self.driver.close()
+        self.driver.quit()
+
+
+if __name__ == "__main__":
+    unittest.main()
